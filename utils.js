@@ -4,8 +4,8 @@ const path = require("path");
 
 const ObjectsToCsv = require("objects-to-csv");
 
-const getAbsPath = (path) => {
-  return path.resolve(path);
+const getAbsPath = (dir) => {
+  return path.resolve(dir);
 };
 const pathExists = (path) => {
   return fs.existsSync(path);
@@ -48,9 +48,11 @@ const getPuppeteerBrowser = (headless) => {
       "--disable-gpu",
       "--disable-features=IsolateOrigins,site-per-process",
       "--blink-settings=imagesEnabled=true",
+      "--disable-popup-blocking",
     ],
   });
 };
+
 const deepClone = (object) => {
   return JSON.parse(JSON.stringify(object));
 };
