@@ -17,6 +17,17 @@ async function run() {
     }
     return await page.$$(selector);
   }
+  async function x_waitThenGetElement(selector, timeout, unique) {
+    unique = unique || true;
+    timeout = timeout || 60000;
+    await page.waitForXPath(selector, { timeout });
+    await utils.sleep(2000);
+    console.log(await page.$x(selector));
+    if (unique) {
+      return (await page.$x(selector))[0];
+    }
+    return await page.$x(selector);
+  }
   async function typeToInput(selector, text) {
     await waitThenGetElement(selector);
     await page.type(selector, text, { delay: 50 });
@@ -34,13 +45,13 @@ async function run() {
   }
   const USER = products[0].USER;
   const PASSWORD = products[0].PASSWORD;
-  const DESCRIPTION = products[0].DESC;
+  const DESCRIPTION = products[0].DESC.split("\\n").join("\n");
   const METADESC = products[0].META;
   const KEYWORD = products[0].KEYWORD;
   const REGULAR = products[0].REG;
   const SALE = products[0].SALE;
-  const SHORT = products[0].SHORT;
-
+  const SHORT = products[0].SHORT.split("\\n").join("\n");
+  console.log(DESCRIPTION, SHORT);
   // console.log(products[0]);
   // console.log(USER, PASSWORD, DESCRIPTION, METADESC, KEYWORD);
   async function exec_woo(kc, kp1, kp2, joint, img, zip, cat, newcat) {
@@ -57,7 +68,7 @@ async function run() {
       );
       await utils.sleep(3000);
       try {
-        await waitThenGetElement("#title", 1000);
+        await waitThenGetElement("#title", 10000);
       } catch {
         if (!(await page.url()).includes("wp-login")) return "NETWORK PROBLEM";
         // console.log(USER);
@@ -75,7 +86,7 @@ async function run() {
         "#title",
         `${kc} ${kp1} ${joint}, ${kp2} ${joint} ${KEYWORD}`
       );
-      /*
+
       await (await waitThenGetElement("#content-html")).click();
       await utils.sleep(1500);
       // console.log(DESCRIPTION);
@@ -123,21 +134,31 @@ async function run() {
         METADESC.replace(/title_to_replace/g, kc)
       );
       await typeToInput("#_regular_price", REGULAR);
-      await typeToInput("#_sale_price", SALE);*/
+      await typeToInput("#_sale_price", SALE);
       await (await waitThenGetElement("#_downloadable")).click();
       await (await waitThenGetElement("a.insert")).click();
       await typeToInput(".file_name > .input_text", kc);
       await (
         await waitThenGetElement(".file_url_choose .upload_file_button")
       ).click();
-      await (await waitThenGetElement("#menu-item-upload")).click();
+      await utils.sleep(1000);
+      await (
+        await waitThenGetElement("#__wp-uploader-id-5 #menu-item-upload")
+      ).click();
       await utils.sleep(1000);
       console.log(zip);
-      await (await waitThenGetElement("input[type='file']")).uploadFile(zip);
-      await waitThenGetElement("#attachment-details-title:not([readonly])");
       await (
-        await waitThenGetElement(".media-frame-toolbar .button-primary")
+        await waitThenGetElement("#__wp-uploader-id-5 input[type='file']")
+      ).uploadFile(zip);
+      await waitThenGetElement(
+        "#__wp-uploader-id-5 #attachment-details-title:not([readonly])"
+      );
+      await (
+        await waitThenGetElement(
+          "#__wp-uploader-id-5 .media-frame-toolbar .button-primary"
+        )
       ).click();
+      await utils.sleep(1500);
       await (await waitThenGetElement("#excerpt-html")).click();
       await utils.sleep(1500);
       await page.evaluate(
@@ -150,22 +171,72 @@ async function run() {
         SHORT,
         kc
       );
-
+      const cats = cat.split(",");
+      const newCats = newcat.split(",");
+      if (cats.length > 0) {
+        console.log(cat, cats);
+        for (let item of cats) {
+          try {
+            ////*[@id="product_catchecklist"]//*[text()=' CATS']
+            const opt = await x_waitThenGetElement(
+              `//*[@id='product_catchecklist']//*[text()=' ${item.trim()}']`
+            );
+            await opt.click();
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      }
+      if (newCats.length > 0) {
+        await (await waitThenGetElement("#product_cat-add-toggle")).click();
+        for (let item of newCats) {
+          try {
+            await typeToInput("#newproduct_cat", item.trim());
+            await (await waitThenGetElement("#product_cat-add-submit")).click();
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      }
+      await page.evaluate(() => document.querySelector("#publish").click());
+      await x_waitThenGetElement(
+        "//*[@id='wpbody-content']/div[5]/a[text()='Add New']"
+      );
       return "SUCCESS";
-    } catch {
+    } catch (e) {
+      // console.log(e);
+      utils.clog(e);
       return "NETWORK PROBLEM";
     }
   }
   for (let p of products) {
-    let status = await exec_woo(p.KC, p.KP1, p.KP2, p.JOINT, p.IMG, p.ZIP);
+    let status = await exec_woo(
+      p.KC,
+      p.KP1,
+      p.KP2,
+      p.JOINT,
+      p.IMG,
+      p.ZIP,
+      p.CAT,
+      p.NEWCAT
+    );
 
     if (status === "NETWORK PROBLEM") {
-      status = await exec_woo(p.KC, p.KP1, p.KP2, p.JOINT, p.IMG, p.ZIP);
+      status = await exec_woo(
+        p.KC,
+        p.KP1,
+        p.KP2,
+        p.JOINT,
+        p.IMG,
+        p.ZIP,
+        p.CAT,
+        p.NEWCAT
+      );
     }
     p.done = status;
     await utils.writeCsv("output.csv", products);
   }
-  await browser.close();
+  // await browser.close();
 }
 
 run();

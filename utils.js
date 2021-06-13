@@ -3,7 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 const ObjectsToCsv = require("objects-to-csv");
-
+const clog = (e) => {
+  fs.appendFileSync("error.txt", e.toString());
+};
 const getAbsPath = (dir) => {
   return path.resolve(dir);
 };
@@ -74,4 +76,5 @@ module.exports = {
   deepClone,
   getAbsPath,
   pathExists,
+  clog,
 };
