@@ -54,7 +54,18 @@ async function run() {
   console.log(DESCRIPTION, SHORT);
   // console.log(products[0]);
   // console.log(USER, PASSWORD, DESCRIPTION, METADESC, KEYWORD);
-  async function exec_woo(kc, kp1, kp2, joint, img, zip, cat, newcat) {
+  async function exec_woo(
+    kc,
+    kp1,
+    kp2,
+    joint,
+    img,
+    zip,
+    cat,
+    newcat,
+    aCom,
+    bCom
+  ) {
     const imageDir = "Images\\";
 
     img = utils.getAbsPath(imageDir + img);
@@ -120,7 +131,7 @@ async function run() {
       // );
       await typeToInput(
         "#yoast-google-preview-title-metabox",
-        [...new Set(`${kc} ${kp2} ${KEYWORD}`.split(" "))].join(" ")
+        [...new Set(`${kc} ${aCom} ${bCom}`.split(" "))].join(" ")
       );
       await (
         await waitThenGetElement("#yoast-google-preview-slug-metabox")
@@ -218,7 +229,9 @@ async function run() {
       p.IMG,
       p.ZIP,
       p.CAT,
-      p.NEWCAT
+      p.NEWCAT,
+      p.A,
+      p.B
     );
 
     if (status === "NETWORK PROBLEM") {
@@ -230,7 +243,9 @@ async function run() {
         p.IMG,
         p.ZIP,
         p.CAT,
-        p.NEWCAT
+        p.NEWCAT,
+        p.A,
+        p.B
       );
     }
     p.done = status;
