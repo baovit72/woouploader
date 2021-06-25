@@ -4,7 +4,7 @@ const path = require("path");
 
 const ObjectsToCsv = require("objects-to-csv");
 const clog = (e) => {
-  fs.appendFileSync("error.txt", e.toString());
+  fs.appendFileSync("error.txt", e.toString() + "\n");
 };
 const getAbsPath = (dir) => {
   return path.resolve(dir);

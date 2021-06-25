@@ -1,12 +1,9 @@
 const axios = require("axios");
 const utils = require("./utils");
 async function run() {
-  const browser = await utils.getPuppeteerBrowser();
-  const page = await browser.newPage();
-  page.on("dialog", async (dialog) => {
-    console.log(dialog.message());
-    await dialog.dismiss();
-  });
+  let browser = null;
+  let page = null;
+
   async function waitThenGetElement(selector, timeout, unique) {
     unique = unique || true;
     timeout = timeout || 60000;
@@ -220,7 +217,18 @@ async function run() {
       return "NETWORK PROBLEM";
     }
   }
-  for (let p of products) {
+  for (let i = 0; i < products.length; i++) {
+    const p = products[i];
+    if (i % 30 === 0) {
+      if (browser) browser.close();
+      browser = await utils.getPuppeteerBrowser();
+      page = await browser.newPage();
+      page.on("dialog", async (dialog) => {
+        console.log(dialog.message());
+        await dialog.dismiss();
+      });
+    }
+
     let status = await exec_woo(
       p.KC,
       p.KP1,
